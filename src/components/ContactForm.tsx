@@ -1,42 +1,65 @@
-import { useState } from "react";
-const baseUrl = "https://localhost:7272";
- const UserId = "1";
+// src/pages/ContactForm.tsx
+import { useEffect, useState } from "react";
+import api from "../api";
+
 const ContactForm = () => {
   const [email, setEmail] = useState("");
   const [first, setFirst] = useState("");
   const [last, setLast] = useState("");
   const [result, setResult] = useState<any>(null);
+  const [userId, setUserId] = useState("");
+
+  useEffect(() => {
+    const storedId = sessionStorage.getItem("userId");
+    if (storedId) setUserId(storedId);
+    else window.location.href = "/login";
+  }, []);
 
   const search = async () => {
-    const res = await fetch(`${baseUrl}/api/contacts/search?email=${email}&UserId=${UserId}` ) ;
-    const data = await res.json();
-    setResult(data);
+    try {
+      const res = await api.get("/contacts/search", {
+        params: { email, userId },
+      });
+      setResult(res.data);
+    } catch (err) {
+      console.error("Search failed", err);
+    }
   };
 
   const create = async () => {
-    const res = await fetch(`${baseUrl}/api/contacts/create`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-      email,
-      firstName: first,
-      lastName: last,
-      create_source: "Contact" ,// or "Contact" if required by your use case
-      UserId: UserId, // Replace with actual user ID if needed
-    }),
-    });
-    const data = await res.json();
-    setResult(data);
+    try {
+      const res = await api.post(`/contacts/create?userId=${userId}`, {
+        email,
+        firstName: first,
+        lastName: last,
+        create_source: "Contact",
+      });
+      setResult(res.data);
+    } catch (err) {
+      console.error("Create failed", err);
+    }
   };
 
   return (
     <div style={{ padding: "2rem" }}>
       <h2>Manage Contact</h2>
-      <input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+      <input
+        placeholder="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
       <br />
-      <input placeholder="First Name" value={first} onChange={(e) => setFirst(e.target.value)} />
+      <input
+        placeholder="First Name"
+        value={first}
+        onChange={(e) => setFirst(e.target.value)}
+      />
       <br />
-      <input placeholder="Last Name" value={last} onChange={(e) => setLast(e.target.value)} />
+      <input
+        placeholder="Last Name"
+        value={last}
+        onChange={(e) => setLast(e.target.value)}
+      />
       <br />
       <button onClick={search}>Search</button>
       <button onClick={create}>Create</button>
